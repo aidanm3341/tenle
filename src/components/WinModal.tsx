@@ -1,15 +1,17 @@
 import { useState } from 'react';
+import { formatDuration } from '../utils/time';
 import './WinModal.css';
 
 interface WinModalProps {
   isOpen: boolean;
   stats: { streak: number; maxStreak: number; totalSolved: number };
   puzzleNumber: number;
+  solveSeconds: number | null;
   shareText: string;
   onClose: () => void;
 }
 
-export default function WinModal({ isOpen, stats, puzzleNumber, shareText, onClose }: WinModalProps) {
+export default function WinModal({ isOpen, stats, puzzleNumber, solveSeconds, shareText, onClose }: WinModalProps) {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -37,6 +39,11 @@ export default function WinModal({ isOpen, stats, puzzleNumber, shareText, onClo
 
         <div className="win-heading">You got it!</div>
         <div className="win-subheading">Puzzle #{puzzleNumber}</div>
+
+        <div className="win-time">
+          <span className="win-time-value">{solveSeconds != null ? formatDuration(solveSeconds) : '—'}</span>
+          <span className="win-time-label">Your time</span>
+        </div>
 
         <div className="win-stats">
           <div className="win-stat">

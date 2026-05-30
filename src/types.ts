@@ -26,4 +26,6 @@ export interface DailyState {
   operators: (OperatorSymbol | null)[];
   brackets: BracketState;
   isSolved: boolean;
+  startedAt: number | null;    // ms timestamp of the first move (when the timer started)
+  solveSeconds: number | null; // elapsed seconds at the moment it was solved
 }

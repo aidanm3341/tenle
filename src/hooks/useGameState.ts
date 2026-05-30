@@ -3,6 +3,7 @@ import type { OperatorSymbol, BracketState, GameStats, Puzzle } from '../types';
 import { evaluate, buildExpression, validateBrackets } from '../utils/evaluator';
 import { getDateString, getYesterdayString, getPuzzleByNumber, getPuzzleNumber, normalizeRoute } from '../utils/puzzleUtils';
 import { loadDailyState, saveDailyState, loadStats, saveStats } from '../utils/storage';
+import { formatDuration } from '../utils/time';
 
 const EMPTY_BRACKETS: BracketState = {
   open: [0, 0, 0, 0, 0],
@@ -53,6 +54,11 @@ export function useGameState() {
   const [isWinModalOpen, setIsWinModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
+  // Timer: starts on the first move, freezes on solve
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [solveSeconds, setSolveSeconds] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
   // Restore today's daily state on mount (archived puzzles always start fresh)
   useEffect(() => {
     if (isArchive) return;
@@ -61,26 +67,59 @@ export function useGameState() {
       setOperators(saved.operators);
       setBrackets(normalizeBrackets(saved.brackets));
       setIsSolved(saved.isSolved);
+      setStartedAt(saved.startedAt ?? null);
+      setSolveSeconds(saved.solveSeconds ?? null);
       if (saved.isSolved) setIsWinModalOpen(true);
     }
   }, [today, isArchive]);
+
+  // Tick once a second while the puzzle is started but not yet solved
+  useEffect(() => {
+    if (isSolved || startedAt === null) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isSolved, startedAt]);
 
   // Derived values
   const expression = buildExpression(puzzle.numbers, operators, brackets);
   const isComplete = operators.every((op) => op !== null);
   const { valid: isBracketValid, invalidOpen, invalidClose } = validateBrackets(brackets);
   const result = evaluate(puzzle.numbers, operators, brackets);
+  const elapsedSeconds =
+    solveSeconds != null
+      ? solveSeconds
+      : startedAt != null
+        ? Math.max(0, Math.floor((now - startedAt) / 1000))
+        : 0;
 
-  const persistDaily = useCallback(
-    (ops: (OperatorSymbol | null)[], brk: BracketState, solved: boolean) => {
-      if (isArchive) return; // archived puzzles never overwrite today's progress
-      saveDailyState({ date: today, operators: ops, brackets: brk, isSolved: solved });
+  // Persist current daily progress (no-op for archived puzzles). Pass only the
+  // fields that changed; the rest fall back to current state.
+  const persist = useCallback(
+    (next: {
+      operators?: (OperatorSymbol | null)[];
+      brackets?: BracketState;
+      isSolved?: boolean;
+      startedAt?: number | null;
+      solveSeconds?: number | null;
+    }) => {
+      if (isArchive) return;
+      saveDailyState({
+        date: today,
+        operators: next.operators ?? operators,
+        brackets: next.brackets ?? brackets,
+        isSolved: next.isSolved ?? isSolved,
+        startedAt: next.startedAt !== undefined ? next.startedAt : startedAt,
+        solveSeconds: next.solveSeconds !== undefined ? next.solveSeconds : solveSeconds,
+      });
     },
-    [today, isArchive]
+    [today, isArchive, operators, brackets, isSolved, startedAt, solveSeconds]
   );
 
-  const handleWin = useCallback(
-    (ops: (OperatorSymbol | null)[], brk: BracketState) => {
+  const finishWin = useCallback(
+    (ops: (OperatorSymbol | null)[], brk: BracketState, start: number | null) => {
+      const secs = start != null ? Math.max(0, Math.floor((Date.now() - start) / 1000)) : 0;
+      setSolveSeconds(secs);
       // Only the daily puzzle affects streaks and persisted progress
       if (!isArchive) {
         const yesterday = getYesterdayString();
@@ -95,38 +134,40 @@ export function useGameState() {
         };
         saveStats(updated);
         setStats(updated);
-        persistDaily(ops, brk, true);
+        persist({ operators: ops, brackets: brk, isSolved: true, startedAt: start, solveSeconds: secs });
       }
       setIsSolved(true);
       setTimeout(() => setIsWinModalOpen(true), 600);
     },
-    [today, persistDaily, isArchive]
+    [today, persist, isArchive]
   );
 
   const checkWin = useCallback(
-    (ops: (OperatorSymbol | null)[], brk: BracketState) => {
+    (ops: (OperatorSymbol | null)[], brk: BracketState, start: number | null) => {
       const res = evaluate(puzzle.numbers, ops, brk);
       const allFilled = ops.every((o) => o !== null);
       if (allFilled && res !== null && Math.abs(res - 10) < 1e-9) {
-        handleWin(ops, brk);
+        finishWin(ops, brk, start);
         return true;
       }
       return false;
     },
-    [puzzle.numbers, handleWin]
+    [puzzle.numbers, finishWin]
   );
 
-  // Place an operator into a specific slot (called on drop)
+  // Place an operator into a specific slot (called on drop) — starts the timer
   const setOperator = useCallback(
     (op: OperatorSymbol, slotIndex: number) => {
+      const start = startedAt ?? Date.now();
+      if (startedAt === null) setStartedAt(start);
       const newOps = [...operators] as (OperatorSymbol | null)[];
       newOps[slotIndex] = op;
       setOperators(newOps);
-      if (!checkWin(newOps, brackets)) {
-        persistDaily(newOps, brackets, false);
+      if (!checkWin(newOps, brackets, start)) {
+        persist({ operators: newOps, startedAt: start });
       }
     },
-    [operators, brackets, checkWin, persistDaily]
+    [operators, brackets, startedAt, checkWin, persist]
   );
 
   // Clear a specific operator slot (called on tap)
@@ -135,14 +176,16 @@ export function useGameState() {
       const newOps = [...operators] as (OperatorSymbol | null)[];
       newOps[slotIndex] = null;
       setOperators(newOps);
-      persistDaily(newOps, brackets, false);
+      persist({ operators: newOps });
     },
-    [operators, brackets, persistDaily]
+    [operators, persist]
   );
 
-  // Place a bracket (called on drop — adds one)
+  // Place a bracket (called on drop — adds one) — starts the timer
   const placeBracket = useCallback(
     (position: number, type: 'open' | 'close') => {
+      const start = startedAt ?? Date.now();
+      if (startedAt === null) setStartedAt(start);
       const newBrackets: BracketState = {
         open: [...brackets.open],
         close: [...brackets.close],
@@ -150,11 +193,11 @@ export function useGameState() {
       if (type === 'open') newBrackets.open[position] += 1;
       else newBrackets.close[position] += 1;
       setBrackets(newBrackets);
-      if (!checkWin(operators, newBrackets)) {
-        persistDaily(operators, newBrackets, false);
+      if (!checkWin(operators, newBrackets, start)) {
+        persist({ brackets: newBrackets, startedAt: start });
       }
     },
-    [brackets, operators, checkWin, persistDaily]
+    [brackets, operators, startedAt, checkWin, persist]
   );
 
   // Remove a bracket (called on tap — removes one, floors at 0)
@@ -167,29 +210,19 @@ export function useGameState() {
       if (type === 'open') newBrackets.open[position] = Math.max(0, newBrackets.open[position] - 1);
       else newBrackets.close[position] = Math.max(0, newBrackets.close[position] - 1);
       setBrackets(newBrackets);
-      if (!checkWin(operators, newBrackets)) {
-        persistDaily(operators, newBrackets, false);
+      if (!checkWin(operators, newBrackets, startedAt)) {
+        persist({ brackets: newBrackets });
       }
     },
-    [brackets, operators, checkWin, persistDaily]
+    [brackets, operators, startedAt, checkWin, persist]
   );
 
+  // Spoiler-free share: puzzle number + solve time + a link to play
   const getShareText = useCallback(() => {
-    const EMOJI: Record<string, string> = { '+': '🟥', '-': '🟦', '×': '🟧', '÷': '🟨', '^': '🟪' };
-    const opRow = operators.map((op) => (op ? EMOJI[op] : '⬜')).join('');
-    const bracketRow = Array(5)
-      .fill(0)
-      .map((_, i) => (brackets.open[i] > 0 || brackets.close[i] > 0 ? '🟤' : '⬜'))
-      .join('');
-    return [
-      `TENLE #${puzzleNumber} ✅`,
-      '',
-      `${expression} = 10`,
-      '',
-      opRow,
-      bracketRow,
-    ].join('\n');
-  }, [operators, brackets, expression, puzzleNumber]);
+    const playUrl = window.location.origin + import.meta.env.BASE_URL;
+    const timeLine = solveSeconds != null ? `⏱ Solved in ${formatDuration(solveSeconds)}` : '⏱ Solved';
+    return [`TENLE #${puzzleNumber} ✅`, timeLine, '', playUrl].join('\n');
+  }, [puzzleNumber, solveSeconds]);
 
   return {
     puzzle: puzzle as Puzzle,
@@ -203,6 +236,8 @@ export function useGameState() {
     isBracketValid,
     invalidBracketPositions: { open: invalidOpen, close: invalidClose },
     isSolved,
+    elapsedSeconds,
+    solveSeconds,
     stats,
     isWinModalOpen,
     isHelpModalOpen,

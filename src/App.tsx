@@ -3,6 +3,7 @@ import { useGameState } from './hooks/useGameState';
 import { useDragDrop } from './hooks/useDragDrop';
 import { useTheme } from './hooks/useTheme';
 import type { DragItem, OperatorSymbol } from './types';
+import { formatDuration } from './utils/time';
 import Header from './components/Header';
 import PuzzleBoard from './components/PuzzleBoard';
 import WinModal from './components/WinModal';
@@ -54,6 +55,9 @@ function App() {
             <a className="archive-banner-link" href={import.meta.env.BASE_URL}>Today →</a>
           </div>
         )}
+        <div className={`game-timer${g.isSolved ? ' solved' : ''}`} aria-label="Elapsed time">
+          {formatDuration(g.elapsedSeconds)}
+        </div>
         <PuzzleBoard
           numbers={g.puzzle.numbers}
           operators={g.operators}
@@ -87,6 +91,7 @@ function App() {
         isOpen={g.isWinModalOpen}
         stats={g.stats}
         puzzleNumber={g.puzzleNumber}
+        solveSeconds={g.solveSeconds}
         shareText={shareText}
         onClose={g.closeWinModal}
       />
