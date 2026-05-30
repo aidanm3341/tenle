@@ -1,7 +1,7 @@
 import type { DailyState, GameStats } from '../types';
 
-const DAILY_KEY = 'tenner-daily';
-const STATS_KEY = 'tenner-stats';
+const DAILY_KEY = 'tenle-daily';
+const STATS_KEY = 'tenle-stats';
 
 export function loadDailyState(): DailyState | null {
   try {

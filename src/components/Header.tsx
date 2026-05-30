@@ -21,7 +21,7 @@ export default function Header({ puzzleNumber, streak, theme, onHelpClick, onThe
       </button>
 
       <div className="header-center">
-        <div className="header-title">TENNER</div>
+        <div className="header-title">TENLE</div>
         <div className="header-puzzle-num">#{puzzleNumber}</div>
       </div>
 

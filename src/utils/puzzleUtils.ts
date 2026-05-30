@@ -26,7 +26,7 @@ export function getPuzzleByNumber(n: number): Puzzle {
   return list[index];
 }
 
-// Strip the app's base prefix (e.g. "/make10/") off a pathname and return the
+// Strip the app's base prefix (e.g. "/tenle/") off a pathname and return the
 // bare route segment — "" for the root, or "5" / "abc" for sub-paths.
 export function normalizeRoute(pathname: string, base: string): string {
   let rel = pathname;

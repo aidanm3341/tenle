@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generates a set of valid Tenner puzzles and writes them to src/data/puzzles.json.
+// Generates a set of valid Tenle puzzles and writes them to src/data/puzzles.json.
 // A puzzle is valid if at least one combination of operators + UI-expressible brackets
 // produces a result of exactly 10.
 // Run with: node scripts/generatePuzzles.js

@@ -182,7 +182,7 @@ export function useGameState() {
       .map((_, i) => (brackets.open[i] > 0 || brackets.close[i] > 0 ? '🟤' : '⬜'))
       .join('');
     return [
-      `TENNER #${puzzleNumber} ✅`,
+      `TENLE #${puzzleNumber} ✅`,
       '',
       `${expression} = 10`,
       '',
