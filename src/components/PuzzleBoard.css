@@ -1,0 +1,84 @@
+.puzzle-board {
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 24px 8px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--color-border);
+}
+
+.puzzle-expression-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 0;
+}
+
+.puzzle-row {
+  width: 100%;
+  padding: 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Inner content sized to its natural width; scaled down via JS to fit.
+   Flex-centering keeps an oversized run centered, and a center-origin
+   transform then shrinks it to fit exactly within the row. */
+.puzzle-row-inner {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  padding: 0 4px;
+  transform-origin: center center;
+  transition: transform 0.14s ease;
+}
+
+/* ── = 10 inline goal ────────────────────────────────────── */
+.expression-equals {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+  font-family: var(--font-display);
+  font-size: calc(var(--tile-size) * 0.72);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+/* Goal state: muted — shows the target */
+.expression-equals--goal {
+  color: var(--color-text-muted);
+}
+
+/* Invalid brackets */
+.expression-equals--invalid {
+  color: var(--color-pending);
+  text-shadow: 0 0 12px rgba(245, 167, 35, 0.4);
+}
+
+/* Wrong answer */
+.expression-equals--wrong {
+  color: var(--color-accent);
+  text-shadow: 0 0 14px rgba(233, 69, 96, 0.4);
+}
+
+/* Correct — lights up green */
+.expression-equals--correct {
+  color: var(--color-correct);
+  text-shadow: 0 0 20px rgba(45, 158, 95, 0.55);
+}
+
+.equals-sign {
+  opacity: 0.7;
+}
+
+.equals-value {
+  opacity: 1;
+}

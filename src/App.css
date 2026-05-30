@@ -1,0 +1,186 @@
+/* ─── Design Tokens ─────────────────────────────────────── */
+:root {
+  --color-bg:         #1a1a2e;
+  --color-surface:    #16213e;
+  --color-surface-2:  #0f3460;
+  --color-border:     #2a3a5c;
+  --color-accent:     #e94560;
+  --color-accent-soft:#ff6b6b;
+  --color-cream:      #f5f0e8;
+  --color-cream-dark: #e0d9cc;
+  --color-text:       #f0eadc;
+  --color-text-muted: #8892a4;
+  --color-correct:    #2d9e5f;
+  --color-pending:    #f5a623;
+
+  --font-display: 'Bebas Neue', Impact, sans-serif;
+  --font-ui:      'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'DM Mono', 'Courier New', monospace;
+
+  --color-dot:    rgba(255, 255, 255, 0.04);
+
+  /* Puzzle row sizing — fits 375px viewport with = 10 */
+  --tile-size:   36px;
+  --op-size:     22px;
+  --bracket-h:   26px;
+}
+
+@media (min-width: 440px) {
+  :root {
+    --tile-size:  46px;
+    --op-size:    30px;
+    --bracket-h:  30px;
+  }
+}
+
+/* ─── Light mode token overrides ────────────────────────── */
+:root[data-theme="light"] {
+  --color-dot:        rgba(0, 0, 0, 0.04);
+
+  --color-bg:         #f0ebe2;
+  --color-surface:    #faf6f0;
+  --color-surface-2:  #ece6db;
+  --color-border:     #c8bfb2;
+
+  --color-accent:     #c4273e;   /* darkened red — readable on light */
+  --color-accent-soft:#e94560;
+  --color-cream:      #1a1a2e;   /* numbers become dark ink */
+  --color-cream-dark: #2a2a40;
+  --color-text:       #1a1a2e;
+  --color-text-muted: #7a7168;
+
+  --color-correct:    #1a6e38;   /* darker green */
+  --color-pending:    #9c5800;   /* darker amber */
+}
+
+/* ─── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+html, body {
+  height: 100%;
+  width: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background-color: var(--color-bg);
+  background-image: radial-gradient(circle, var(--color-dot) 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* ─── App Shell ──────────────────────────────────────────── */
+.app {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Push content toward the upper-middle, not dead-center */
+  justify-content: flex-start;
+  padding: 40px 12px 48px;
+  gap: 16px;
+}
+
+.app-tagline {
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+
+/* ─── Archive banner (viewing a past puzzle) ─────────────── */
+.archive-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.archive-banner-label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.archive-banner-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.archive-banner-link:hover {
+  text-decoration: underline;
+}
+
+/* ─── Keyframes ──────────────────────────────────────────── */
+@keyframes tile-bounce {
+  0%   { transform: scale(1) translateY(0); }
+  25%  { transform: scale(1.18) translateY(-8px); }
+  55%  { transform: scale(0.96) translateY(0); }
+  75%  { transform: scale(1.04) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes result-flash {
+  0%   { background-color: rgba(45, 158, 95, 0.2); }
+  100% { background-color: transparent; }
+}
+
+@keyframes bracket-shake {
+  0%, 100% { transform: translateX(0); }
+  20%  { transform: translateX(-4px); }
+  40%  { transform: translateX(4px); }
+  60%  { transform: translateX(-3px); }
+  80%  { transform: translateX(2px); }
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.93) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}

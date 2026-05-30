@@ -1,0 +1,72 @@
+/* ── Container — full expression-row height ──────────────── */
+.operator-slot {
+  flex: 0 0 var(--op-size);
+  width: var(--op-size);
+  height: var(--tile-size);
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  cursor: default;
+  outline: none;
+}
+
+/* ── Empty state: fill-in-the-blank dash ─────────────────── */
+.operator-slot:not(.filled)::after {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
+  transition:
+    transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+/* Drag-over empty: dot pulses amber */
+.operator-slot:not(.filled).drag-over::after {
+  transform: scale(1.6);
+  background: var(--color-pending);
+  box-shadow: 0 0 10px rgba(245, 167, 35, 0.7);
+}
+
+/* ── Filled state: inline operator character ─────────────── */
+.operator-slot.filled {
+  font-family: var(--font-display);
+  font-size: calc(var(--tile-size) * 0.72);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--color-accent);
+  cursor: pointer;
+  text-shadow: 0 0 20px rgba(233, 69, 96, 0.35);
+  transition: color 0.1s ease, text-shadow 0.1s ease, opacity 0.1s ease;
+}
+
+/* Tap-to-clear hover: symbol dims as affordance */
+.operator-slot.filled:hover {
+  color: var(--color-accent-soft);
+  opacity: 0.6;
+  text-shadow: none;
+}
+
+.operator-slot.filled:active {
+  opacity: 0.35;
+}
+
+/* Filled + drag-over: signal it can be replaced */
+.operator-slot.filled.drag-over {
+  color: var(--color-pending);
+  text-shadow: 0 0 16px rgba(245, 167, 35, 0.6);
+  opacity: 1;
+}
+
+.operator-slot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}

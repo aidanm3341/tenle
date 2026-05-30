@@ -1,0 +1,85 @@
+/* ── Container — inline flow, sized to its content ───────── */
+.number-tile-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: var(--tile-size);
+}
+
+/* ── Number character ────────────────────────────────────── */
+.number-tile {
+  min-width: var(--tile-size);
+  height: var(--tile-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: calc(var(--tile-size) * 0.9);
+  color: var(--color-cream);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+  text-shadow: 0 0 32px rgba(245, 240, 232, 0.15);
+}
+
+.number-tile.won {
+  animation: tile-bounce 0.6s cubic-bezier(0.34, 1.5, 0.64, 1) calc(var(--i) * 0.09s) both;
+  color: var(--color-correct);
+  text-shadow: 0 0 24px rgba(45, 158, 95, 0.5);
+}
+
+/* ── Bracket characters — inline, take real width ────────── */
+.bracket-label {
+  font-family: var(--font-display);
+  font-size: calc(var(--tile-size) * 0.78);
+  color: var(--color-pending);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+  text-shadow: 0 0 16px rgba(245, 167, 35, 0.55);
+  transition: opacity 0.1s ease;
+}
+
+.bracket-open  { padding-left: 1px; }
+.bracket-close { padding-right: 1px; }
+
+.bracket-zone.has-bracket:hover ~ .bracket-label,
+.bracket-zone.has-bracket:hover .bracket-label {
+  opacity: 0.55;
+}
+
+/* ── Invisible drop zones — left/right halves of container ─ */
+.bracket-zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  z-index: 3;
+  pointer-events: auto;
+  transition: background 0.1s ease;
+}
+
+.bz-open  { left: 0;  border-radius: 6px 0 0 6px; }
+.bz-close { right: 0; border-radius: 0 6px 6px 0; }
+
+/* Subtle glow on valid zones while dragging the matching type */
+.show-open-zones .bz-open,
+.show-close-zones .bz-close {
+  background: rgba(245, 167, 35, 0.05);
+}
+
+.bracket-zone.drag-over {
+  background: rgba(245, 167, 35, 0.18) !important;
+}
+
+.bracket-zone.has-bracket {
+  cursor: pointer;
+}
+
+.bracket-zone.has-bracket:hover {
+  background: rgba(245, 167, 35, 0.1);
+}
