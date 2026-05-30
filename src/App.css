@@ -114,14 +114,18 @@ body {
   gap: 16px;
 }
 
-.app-tagline {
+.app-intro {
+  max-width: 30ch;
+  text-align: center;
   font-family: var(--font-ui);
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
+  font-size: 0.85rem;
+  line-height: 1.45;
   color: var(--color-text-muted);
-  opacity: 0.6;
+}
+
+.app-intro strong {
+  color: var(--color-text);
+  font-weight: 700;
 }
 
 /* ─── Archive banner (viewing a past puzzle) ─────────────── */

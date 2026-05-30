@@ -45,6 +45,9 @@ function App() {
         onThemeToggle={toggleTheme}
       />
       <main className="app-main">
+        <p className="app-intro">
+          Drag operators between the numbers to make the line equal <strong>10</strong>.
+        </p>
         {g.isArchive && (
           <div className="archive-banner">
             <span className="archive-banner-label">Archive · Puzzle #{g.puzzleNumber}</span>
