@@ -59,18 +59,39 @@ export function useGameState() {
   const [solveSeconds, setSolveSeconds] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
-  // Restore today's daily state on mount (archived puzzles always start fresh)
+  // On mount: restore saved progress and start the clock immediately, so the
+  // timer counts thinking time from the moment the puzzle loads. startedAt is
+  // persisted, so a refresh resumes the clock rather than resetting it.
   useEffect(() => {
-    if (isArchive) return;
-    const saved = loadDailyState();
-    if (saved && saved.date === today) {
-      setOperators(saved.operators);
-      setBrackets(normalizeBrackets(saved.brackets));
-      setIsSolved(saved.isSolved);
-      setStartedAt(saved.startedAt ?? null);
-      setSolveSeconds(saved.solveSeconds ?? null);
-      if (saved.isSolved) setIsWinModalOpen(true);
+    if (isArchive) {
+      // Archived puzzles are ephemeral — run an in-memory clock for this session
+      setStartedAt(Date.now());
+      return;
     }
+    const saved = loadDailyState();
+    let ops: (OperatorSymbol | null)[] = [null, null, null, null];
+    let brk: BracketState = EMPTY_BRACKETS;
+    let solved = false;
+    let start: number | null = null;
+    let solveSecs: number | null = null;
+    if (saved && saved.date === today) {
+      ops = saved.operators;
+      brk = normalizeBrackets(saved.brackets);
+      solved = saved.isSolved;
+      start = saved.startedAt ?? null;
+      solveSecs = saved.solveSeconds ?? null;
+      setOperators(ops);
+      setBrackets(brk);
+      setIsSolved(solved);
+      setSolveSeconds(solveSecs);
+      if (solved) setIsWinModalOpen(true);
+    }
+    if (!solved && start == null) {
+      // First time opening this puzzle today — stamp and persist the start time
+      start = Date.now();
+      saveDailyState({ date: today, operators: ops, brackets: brk, isSolved: false, startedAt: start, solveSeconds: null });
+    }
+    setStartedAt(start);
   }, [today, isArchive]);
 
   // Tick once a second while the puzzle is started but not yet solved
@@ -155,16 +176,14 @@ export function useGameState() {
     [puzzle.numbers, finishWin]
   );
 
-  // Place an operator into a specific slot (called on drop) — starts the timer
+  // Place an operator into a specific slot (called on drop)
   const setOperator = useCallback(
     (op: OperatorSymbol, slotIndex: number) => {
-      const start = startedAt ?? Date.now();
-      if (startedAt === null) setStartedAt(start);
       const newOps = [...operators] as (OperatorSymbol | null)[];
       newOps[slotIndex] = op;
       setOperators(newOps);
-      if (!checkWin(newOps, brackets, start)) {
-        persist({ operators: newOps, startedAt: start });
+      if (!checkWin(newOps, brackets, startedAt)) {
+        persist({ operators: newOps });
       }
     },
     [operators, brackets, startedAt, checkWin, persist]
@@ -181,11 +200,9 @@ export function useGameState() {
     [operators, persist]
   );
 
-  // Place a bracket (called on drop — adds one) — starts the timer
+  // Place a bracket (called on drop — adds one)
   const placeBracket = useCallback(
     (position: number, type: 'open' | 'close') => {
-      const start = startedAt ?? Date.now();
-      if (startedAt === null) setStartedAt(start);
       const newBrackets: BracketState = {
         open: [...brackets.open],
         close: [...brackets.close],
@@ -193,8 +210,8 @@ export function useGameState() {
       if (type === 'open') newBrackets.open[position] += 1;
       else newBrackets.close[position] += 1;
       setBrackets(newBrackets);
-      if (!checkWin(operators, newBrackets, start)) {
-        persist({ brackets: newBrackets, startedAt: start });
+      if (!checkWin(operators, newBrackets, startedAt)) {
+        persist({ brackets: newBrackets });
       }
     },
     [brackets, operators, startedAt, checkWin, persist]
